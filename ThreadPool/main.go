@@ -59,7 +59,7 @@ func (p *Pool) AddJob(conn net.Conn) {
 
 func (p *Pool) Start() {
 	for i := range len(p.workers) {
-		p.wg.Add(i)
+		p.wg.Add(1)
 		worker := NewWorker(i , p.jobQueue , &p.wg)
 		p.workers[i] = worker
 		worker.Start()	
