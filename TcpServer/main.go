@@ -1,35 +1,54 @@
 package main
 
 import (
+	"io"
 	"log"
 	"net"
-	"time"
 )
 
 func handleConnection(conn net.Conn) {
-	defer conn.Close() 
 	log.Println(conn.RemoteAddr())
 	//read data from clients
-	var buf []byte = make([]byte , 1000)
 	for {
-		_ , err := conn.Read(buf)
+		cmd , err := readCommand(conn)
 		if err != nil {
-			log.Fatal(err)
+			conn.Close()
+			log.Println("Client disconnected" , conn.RemoteAddr())
+			if err == io.EOF {
+				break
+			}
+			return
+		}else{
+			log.Println("Command:",cmd)
 		}
-		//process
-		time.Sleep(time.Second * 10)
-		
-		//rep 
-		conn.Write([]byte("HTTP/1.1 200 OK\r\n\r\nHello, world\r\n"))
+		if err = respond(cmd , conn) ; err != nil {
+			log.Println("error write:" , err)
+		}
 	}
 }
 
+func readCommand(c net.Conn) (string , error) {
+	var buf []byte = make([]byte , 1000)
+	n , err := c.Read(buf)
+	if err != nil {
+		return "" , err
+	} 
+	return string(buf[:n]) , err 
+}
+
+func respond(cmd string , c net.Conn) error {
+	if _ , err := c.Write([]byte(cmd)) ; err != nil {
+		return err
+	}
+	return nil
+}
 
 func main() {
 	listener, err := net.Listen("tcp" , ":3000")
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Println("Listening at port 3000")
 	for {
 		// socket == dedicated communication channel
 		conn , err := listener.Accept()
