@@ -2,22 +2,24 @@ package server
 
 import (
 	"Go-Redis/internal/config"
+	"Go-Redis/internal/core"
 	"Go-Redis/internal/core/io_multiplexing"
 	"io"
 	"log"
 	"net"
 	"syscall"
 )
-func readCommand(fd int) (string , error) {
+func readCommand(fd int) (*core.Command , error) {
 	var buff = make([]byte , 512)
 	n , err := syscall.Read(fd , buff)
 	if err != nil {
-		return "" , err
+		return nil , err
 	}
 	if n == 0 {
-		return "" , io.EOF
+		return nil , io.EOF
 	}
-	return string(buff[:n]) , nil
+	// log.Println("read data:" , string(buff))
+	return core.ParseCmd(buff)
 }
 
 func respond(data string , fd int) error {
@@ -102,7 +104,7 @@ func RunIoMultiplexingServer() {
 					log.Println("read error:" , err)
 					continue
 				}
-				if err = respond(cmd , events[i].Fd) ; err != nil {
+				if err = core.ExecuteAndResponse(cmd , events[i].Fd); err != nil {
 					log.Println("err write:" , err)
 				}
 			}

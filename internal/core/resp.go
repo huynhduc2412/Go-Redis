@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"strings"
 )
 
 const CRLF string = "\r\n"
@@ -87,6 +88,7 @@ func DecodeOne(data []byte) (interface{}, int, error) {
 	return nil, 0, nil
 }
 
+
 func Decode(data []byte) (interface{}, error) {
 	res, _, err := DecodeOne(data)
 	return res, err
@@ -135,4 +137,18 @@ func Encode(value interface{}, isSimpleString bool) []byte {
 	default:
 		return RespNil
 	}
+}
+
+func ParseCmd(data []byte) (*Command , error) {
+	value , err := Decode(data)
+	if err != nil {
+		return nil , err
+	}
+	arr := value.([]interface{})
+	tokens := make([]string , len(arr))
+	for i := range tokens {
+		tokens[i] = arr[i].(string)
+	}
+	res := &Command{Cmd: strings.ToUpper(tokens[0]) , Args: tokens[1:]}
+	return res , nil
 }
