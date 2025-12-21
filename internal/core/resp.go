@@ -69,6 +69,29 @@ func readArray(data []byte) (interface{}, int, error) {
 	return res, pos, nil
 }
 
+//@1|2|3 -> {1,2,3}
+func readIntArray(data []byte) (interface{} , int , error) {
+	var res []int
+	pos , neg , cur := 0 , 1 , 0
+	
+	for pos = 1 ; pos < len(data) ; pos++ {
+		if data[pos] == '|' {
+			res = append(res, cur * neg)
+			cur , neg = 0 , 1
+			continue
+		}
+		if data[pos] == '-' {
+			neg = -1
+			continue
+		}
+		cur = cur * 10 + int(data[pos] - '0')
+	}
+	if cur != 0 {
+		res = append(res, cur * neg)
+	}
+	return res , pos , nil
+}
+
 func DecodeOne(data []byte) (interface{}, int, error) {
 	if len(data) == 0 {
 		return nil, 0, errors.New("no data")
@@ -84,6 +107,8 @@ func DecodeOne(data []byte) (interface{}, int, error) {
 		return readBulkString(data)
 	case '*':
 		return readArray(data)
+	case '@':
+		return readIntArray(data)
 	}
 	return nil, 0, nil
 }

@@ -62,6 +62,18 @@ func TestBulkStringDecode(t *testing.T) {
 	}
 }
 
+func TestArrayIntDecode(t *testing.T) {
+	cases := map[string] []int {
+		"@1|2|3" : {1,2,3},
+		"@" : nil,
+		"@-1|-2|3": {-1,-2,3},
+	}
+	for k , v := range cases {
+		value , _ := core.Decode([]byte(k))
+		assert.EqualValues(t , v , value)
+	}
+}
+
 func TestArrayDecode(t *testing.T) {
 	cases := map[string][]interface{}{
 		"*0\r\n":                                                   {},
@@ -95,6 +107,8 @@ func TestEncodeString2DArray(t *testing.T) {
 		}
 	}
 }
+
+
 func TestParseCmd(t *testing.T) {
 	cases := map[string]core.Command{
 		"*3\r\n$3\r\nput\r\n$5\r\nhello\r\n$5\r\nworld\r\n": core.Command{
