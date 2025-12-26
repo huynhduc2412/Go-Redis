@@ -2,12 +2,14 @@ package server
 
 import (
 	"Go-Redis/internal/config"
+	"Go-Redis/internal/constant"
 	"Go-Redis/internal/core"
 	"Go-Redis/internal/core/io_multiplexing"
 	"io"
 	"log"
 	"net"
 	"syscall"
+	"time"
 )
 func readCommand(fd int) (*core.Command , error) {
 	var buff = make([]byte , 512)
@@ -66,8 +68,14 @@ func RunIoMultiplexingServer() {
 	}
 
 	var events = make([]io_multiplexing.Event, config.MaxConnection)
-
+	var lastActiveExpireExecTime = time.Now()
 	for {
+		//Delete expire key 
+		if time.Now().After(lastActiveExpireExecTime.Add(constant.ActiveExpireFrequency)) {
+			core.ActiveDeleteExpiredKeys()
+			lastActiveExpireExecTime = time.Now()
+		}
+
 		//wait for file descriptors in the monitoring list to be ready for I/O
 		//it's a blocking call
 		events , err = ioMultiplexer.Wait()
