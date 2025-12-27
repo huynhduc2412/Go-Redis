@@ -78,6 +78,50 @@ func cmdTTL(args []string) []byte {
 	return Encode(int64(remainMs / 1000) , false)
 }
 
+func cmdDEL(args []string) []byte {
+	if len(args) == 0 {
+		return Encode(errors.New("(err) ERR wrong number of arguments for 'DEL' command") , false)
+	}
+	delCnt := 0
+	for _ , key := range args {
+		if ok := dicStore.Del(key) ; ok {
+			delCnt++
+		}
+	} 
+	return Encode(delCnt , false)
+}
+
+func cmdEXPIRE(args []string) []byte {
+	if len(args) < 2 {
+		return Encode(errors.New("(error) ERR wrong number of arguments for 'EXPIRE' command") , false)
+	}
+	key := args[0]
+	ttlSec , err := strconv.ParseInt(args[1] , 10 , 64)
+	if err != nil {
+		return Encode(errors.New("(error) ERR value is not an integer or out of range") , false)
+	}
+	
+	obj := dicStore.Get(key)
+	if obj == nil {
+		return constant.RespZero
+	}
+	dicStore.SetExpiry(key , ttlSec * 1000)
+	return constant.RespOne
+}
+
+func cmdEXISTS(args []string) []byte {
+	if len(args) == 0 {
+		return Encode(errors.New("(err) ERR wrong number of arguments for 'EXISTS' command") , false)
+	}
+	cntExist := 0
+	for _ , key := range args {
+		if ok := dicStore.Get(key) ; ok != nil {
+			cntExist++
+		}
+	}
+	return Encode(cntExist , false)
+}
+
 // ExecuteAndResponse given a Command, executes it and responses
 func ExecuteAndResponse(cmd *Command , connFd int) error {
 	var res []byte
@@ -90,6 +134,12 @@ func ExecuteAndResponse(cmd *Command , connFd int) error {
 		res = cmdGet(cmd.Args)
 	case "TTL":
 		res = cmdTTL(cmd.Args)
+	case "DEL":
+		res = cmdDEL(cmd.Args)
+	case "EXPIRE":
+		res = cmdEXPIRE(cmd.Args)
+	case "EXISTS":
+		res = cmdEXISTS(cmd.Args)
 	default:
 		res = []byte(fmt.Sprintf("-CMD NOT FOUND\r\n"))
 	}
