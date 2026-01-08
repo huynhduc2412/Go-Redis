@@ -1,4 +1,4 @@
-package datastructure
+package data_structure
 
 type SimpleSet struct {
 	dict map[string]struct{}
