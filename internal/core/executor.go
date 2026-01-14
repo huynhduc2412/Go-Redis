@@ -154,6 +154,14 @@ func ExecuteAndResponse(cmd *Command , connFd int) error {
 		res = cmdZRANK(cmd.Args)
 	case "ZSCORE":
 		res = cmdZSCORE(cmd.Args)
+	case "CMS.INITBYDIM":
+		res = cmdCMSINITBYDIM(cmd.Args)
+	case "CMS.INITBYPROB":
+		res = cmdCMSINITBYPROB(cmd.Args)
+	case "CMS.INCRBY":
+		res = cmdCMSINCRBY(cmd.Args)
+	case "CMS.QUERY":
+		res = cmdCMSQUERY(cmd.Args)
 	default:
 		res = []byte(fmt.Sprintf("-CMD NOT FOUND\r\n"))
 	}
