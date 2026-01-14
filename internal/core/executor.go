@@ -128,6 +128,7 @@ func ExecuteAndResponse(cmd *Command , connFd int) error {
 	switch cmd.Cmd {
 	case "PING":
 		res = cmdPING(cmd.Args)
+	
 	case "SET": 
 		res = cmdSet(cmd.Args)
 	case "GET":
@@ -140,6 +141,7 @@ func ExecuteAndResponse(cmd *Command , connFd int) error {
 		res = cmdEXPIRE(cmd.Args)
 	case "EXISTS":
 		res = cmdEXISTS(cmd.Args)
+	
 	case "SADD":
 		res = cmdSADD(cmd.Args)
 	case "SREM":
@@ -148,12 +150,14 @@ func ExecuteAndResponse(cmd *Command , connFd int) error {
 		res = cmdSMEMBERS(cmd.Args)
 	case "SISMEMBER":
 		res = cmdSISMEMBER(cmd.Args)
+	
 	case "ZADD":
 		res = cmdZADD(cmd.Args)
 	case "ZRANK":
 		res = cmdZRANK(cmd.Args)
 	case "ZSCORE":
 		res = cmdZSCORE(cmd.Args)
+	
 	case "CMS.INITBYDIM":
 		res = cmdCMSINITBYDIM(cmd.Args)
 	case "CMS.INITBYPROB":
@@ -162,6 +166,13 @@ func ExecuteAndResponse(cmd *Command , connFd int) error {
 		res = cmdCMSINCRBY(cmd.Args)
 	case "CMS.QUERY":
 		res = cmdCMSQUERY(cmd.Args)
+
+	case "BF.RESERVE":
+		res = cmdBFRESERVE(cmd.Args)
+	case "BF.MADD":
+		res = cmdBFADD(cmd.Args)
+	case "BF.EXISTS":
+		res = cmdBFEXISTS(cmd.Args)
 	default:
 		res = []byte(fmt.Sprintf("-CMD NOT FOUND\r\n"))
 	}

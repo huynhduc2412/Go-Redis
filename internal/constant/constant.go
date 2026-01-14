@@ -11,3 +11,6 @@ var TtlKeyExistNoExpire = []byte(":-1\r\n")
 var ActiveExpireFrequency = 100 * time.Millisecond
 var ActiveExpireSampleSize = 20
 var ActiveExpireThreshold = 0.1
+
+const BfDefaultInitCapacity = 100
+const BfDefaultErrRate = 0.01
