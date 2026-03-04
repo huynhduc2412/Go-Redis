@@ -2,12 +2,22 @@ package core
 
 import (
 	"Go-Redis/internal/constant"
+	"Go-Redis/internal/data_structure"
+	"bytes"
 	"errors"
 	"fmt"
 	"strconv"
 	"syscall"
 	"time"
 )
+
+func cmdINFO(args []string) []byte {
+	var info []byte
+	buf := bytes.NewBuffer(info)
+	buf.WriteString("# KeySpace\r\n")
+	buf.WriteString(fmt.Sprintf("db0:keys=%d,expired=0,avg_ttl=0\r\n" , data_structure.HashKeySpaceStat.Key))
+	return Encode(buf.String() , false)
+}
 
 func cmdPING(args []string) []byte {
 	var res []byte
@@ -122,13 +132,16 @@ func cmdEXISTS(args []string) []byte {
 	return Encode(cntExist , false)
 }
 
+
+
 // ExecuteAndResponse given a Command, executes it and responses
 func ExecuteAndResponse(cmd *Command , connFd int) error {
 	var res []byte
 	switch cmd.Cmd {
 	case "PING":
 		res = cmdPING(cmd.Args)
-	
+	case "INFO":
+		res = cmdINFO(cmd.Args)
 	case "SET": 
 		res = cmdSet(cmd.Args)
 	case "GET":
