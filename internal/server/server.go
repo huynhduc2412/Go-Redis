@@ -103,14 +103,18 @@ func RunIoMultiplexingServer(wg *sync.WaitGroup) {
 			atomic.SwapInt32(&serverStatus , constant.ServerStatusIdle)
 			lastActiveExpireExecTime = time.Now()
 		}
-
+		//idle
+		// check if gorountines 2 faster and shutting down before , we check serverstatus and break go1
+		if serverStatus == constant.ServerStatusShuttingDown {
+			return
+		}
 		//wait for file descriptors in the monitoring list to be ready for I/O
 		//it's a blocking call
-		events , err = ioMultiplexer.Wait()
+		events , err = ioMultiplexer.Wait() //busy
 		if err != nil {
 			continue
 		}
-		//check if gorountines 2 faster and shutting down before , we check serverstatus and break go1
+		// check if gorountines 2 faster and shutting down before , we check serverstatus and break go1
 		if !atomic.CompareAndSwapInt32(&serverStatus , constant.ServerStatusIdle , constant.ServerStatusBusy) {
 			if serverStatus == constant.ServerStatusShuttingDown {
 				return
