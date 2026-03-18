@@ -1,5 +1,5 @@
 ![image.png](image.png)
-# Built In-memory database bases on original redis.
+# Built In-memory Database Bases On Original Redis.
 
 Built From Scratch in Go.
 It's inspired by Redis and implements the **RESP (Redis Serialization Protocol)** and making it fully compatible with redis-cli.
