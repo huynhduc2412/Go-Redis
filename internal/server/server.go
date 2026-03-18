@@ -8,9 +8,15 @@ import (
 	"io"
 	"log"
 	"net"
+	"os"
+	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 )
+
+var serverStatus int32 = constant.ServerStatusIdle
+
 func readCommand(fd int) (*core.Command , error) {
 	var buff = make([]byte , 512)
 	n , err := syscall.Read(fd , buff)
@@ -31,7 +37,23 @@ func respond(data string , fd int) error {
 	return nil
 }
 
-func RunIoMultiplexingServer() {
+func WaitForSignal(wg *sync.WaitGroup , signals chan os.Signal) {
+	defer wg.Done()
+	//blocking
+	//wait for signal in chanel
+	<- signals
+	//busy loop 
+	for {
+		if atomic.CompareAndSwapInt32(&serverStatus , constant.ServerStatusIdle , constant.ServerStatusShuttingDown) {
+			//swap successful and have claimed the shutdown state
+			log.Println("Shutting down gracefully")
+			os.Exit(0)
+		}
+	}
+}
+
+func RunIoMultiplexingServer(wg *sync.WaitGroup) {
+	defer wg.Done()
 	log.Println("Starting an I/O Multiplexing TCP server on" , config.Port)
 	listener , err := net.Listen(config.Protocol , config.Port)
 	if err != nil {
@@ -69,10 +91,16 @@ func RunIoMultiplexingServer() {
 
 	var events = make([]io_multiplexing.Event, config.MaxConnection)
 	var lastActiveExpireExecTime = time.Now()
-	for {
+	for atomic.LoadInt32(&serverStatus) != constant.ServerStatusShuttingDown {
 		//Delete expire key 
 		if time.Now().After(lastActiveExpireExecTime.Add(constant.ActiveExpireFrequency)) {
-			core.ActiveDeleteExpiredKeys()
+			if !atomic.CompareAndSwapInt32(&serverStatus , constant.ServerStatusIdle , constant.ServerStatusBusy) {
+				if serverStatus == constant.ServerStatusShuttingDown {
+					return
+				}
+			}
+			core.ActiveDeleteExpiredKeys() //busy
+			atomic.SwapInt32(&serverStatus , constant.ServerStatusIdle)
 			lastActiveExpireExecTime = time.Now()
 		}
 
@@ -82,7 +110,13 @@ func RunIoMultiplexingServer() {
 		if err != nil {
 			continue
 		}
-
+		//check if gorountines 2 faster and shutting down before , we check serverstatus and break go1
+		if !atomic.CompareAndSwapInt32(&serverStatus , constant.ServerStatusIdle , constant.ServerStatusBusy) {
+			if serverStatus == constant.ServerStatusShuttingDown {
+				return
+			}
+		}
+		//busy
 		for i := 0 ; i < len(events) ; i++ {
 			if events[i].Fd == serverFd {
 				log.Printf("new client is trying to connect")
@@ -117,5 +151,7 @@ func RunIoMultiplexingServer() {
 				}
 			}
 		}
+		//idle
+		atomic.SwapInt32(&serverStatus , constant.ServerStatusIdle)
 	}
 }

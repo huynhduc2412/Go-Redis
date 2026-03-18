@@ -6,7 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 )
-
+	
 func main() {
 	fmt.Println("Process ID: " , os.Getpid())
 	// create a channel to receive system signals
